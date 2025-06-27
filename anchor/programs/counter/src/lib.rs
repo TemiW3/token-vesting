@@ -18,6 +18,28 @@ pub mod vesting {
             treatury_bump: ctx.bumps.treasury_account,
             bump: ctx.bumps.vesting_account,
         }; 
+
+        Ok(())
+    }
+
+    pub fn create_employee_vesting_account(
+        ctx: Context<CreateEmployeeVestingAccount>,
+        start_time: i64,
+        end_time: i64,
+        amount: u64,
+        cliff_time: i64,
+    ) -> Result<()> {
+        *ctx.accounts.employee_vesting_account = EmployeeVestingAccount {
+            beneficiary: ctx.accounts.beneficiary.key(),
+            start_time,
+            end_time,
+            cliff_time,
+            vesting_acccount: ctx.accounts.vesting_account.key(),
+            amount,
+            total_claimed: 0,
+            bump: ctx.bumps.employee_vesting_account,
+        };
+
         Ok(())
     }
 
@@ -57,6 +79,31 @@ pub struct CreateVestingAccount<'info>{
     
 }
 
+#[derive(Accounts)]
+pub struct CreateEmployeeVestingAccount<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    pub beneficiary: SystemAccount<'info>,
+
+    #[account(
+        has_one = owner,
+    )]
+    pub vesting_account: Account<'info, VestingAccount>,
+
+    #[account(
+        init,
+        space = 8 + EmployeeVestingAccount::INIT_SPACE,
+        payer = owner,
+        seeds = [b"employee_vesting", vesting_account.key().as_ref(), beneficiary.key().as_ref()],
+        bump,
+    )]
+    pub employee_vesting_account: Account<'info, EmployeeVestingAccount>,
+
+    pub system_program: Program<'info, System>,
+}
+
+
 #[account]
 #[derive(InitSpace)]
 pub struct VestingAccount {
@@ -66,5 +113,18 @@ pub struct VestingAccount {
     #[max_len(64)]
     pub company_name: String,
     pub treatury_bump: u8,
+    pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct EmployeeVestingAccount {
+    pub beneficiary: Pubkey,
+    pub start_time: i64, // Unix timestamp in seconds
+    pub end_time: i64,
+    pub cliff_time: i64,
+    pub vesting_acccount: Pubkey,
+    pub amount: u64,
+    pub total_claimed: u64,
     pub bump: u8,
 }
