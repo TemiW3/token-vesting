@@ -1,16 +1,13 @@
 #![allow(clippy::result_large_err)]
+#![allow(unexpected_cfgs)]
 
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token_interface::{self, Mint, TransferChecked, TokenAccount, TokenInterface}};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{transfer_checked, Mint, TransferChecked, TokenAccount, TokenInterface}};
 
 declare_id!("FqzkXZdwYjurnUKetJCAvaUw5WAqbwzU6gZEwydeEfqS");
 
 #[program]
 pub mod vesting {
-    use core::time;
-
-    use anchor_spl::token_interface;
-
     use super::*;
 
     pub fn create_vesting_account(ctx: Context<CreateVestingAccount>, company_name: String) -> Result<()>{
@@ -59,7 +56,7 @@ pub mod vesting {
         let time_since_start = now.saturating_sub(employee_account.start_time);
         let total_vesting_time = employee_account.end_time.saturating_sub(employee_account.start_time);
 
-        if (total_vesting_time == 0) {
+        if total_vesting_time == 0 {
             return Err(ErrorCode::InvalidVestingPeriod.into());
         }
 
@@ -104,7 +101,7 @@ pub mod vesting {
 
         let decimals = ctx.accounts.mint.decimals;
 
-        token_interface::transfer_checked(
+        transfer_checked(
             cpi_context,
             claimable_amount as u64,
             decimals,
