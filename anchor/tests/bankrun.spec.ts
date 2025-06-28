@@ -1,15 +1,15 @@
 import { PublicKey, Keypair } from '@solana/web3.js'
 import { describe } from 'node:test'
 import * as anchor from '@coral-xyz/anchor'
+import { createMint } from 'spl-token-bankrun'
 import { BanksClient, ProgramTestContext, startAnchor } from 'solana-bankrun'
 import { BankrunProvider } from 'anchor-bankrun'
 import IDL from '../target/idl/vesting.json'
 import { Vesting } from '../target/types/vesting'
 import { SYSTEM_PROGRAM_ID } from '@coral-xyz/anchor/dist/cjs/native/system'
-import { Program } from '@coral-xyz/anchor'
-import { createMint } from 'spl-token-bankrun'
+import { BN, Program } from '@coral-xyz/anchor'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { mintTo, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 
 describe('vesting smart contract tests', () => {
   let beneficiary: Keypair
@@ -58,6 +58,7 @@ describe('vesting smart contract tests', () => {
 
     employer = provider.wallet.payer
 
+    // @ts-ignore
     mint = await createMint(banksClient, employer, employer.publicKey, null, 2)
 
     beneficiaryProvider = new BankrunProvider(context)
@@ -89,5 +90,33 @@ describe('vesting smart contract tests', () => {
 
     console.log('Transaction signature for create vesting account', tx)
     console.log('Vesting account data:', vestingAccountData)
+  })
+
+  it('should fund treasury token account', async () => {
+    const amount = 10_000 * 10 ** 9
+
+    const mintTx = await mintTo(
+      // @ts-expect-error - Type error in spl-token-bankrun dependency
+      banksClient,
+      employer,
+      mint,
+      treasuryTokenAccount,
+      employer,
+      amount,
+    )
+    console.log('Mint transaction signature:', mintTx)
+  })
+
+  it('should create employee vesting account', async () => {
+    const tx2 = await program.methods
+      .createEmployeeVestingAccount(new BN(0), new BN(1000), new BN(100), new BN(0))
+      .accounts({
+        beneficiary: beneficiary.publicKey,
+        vestingAccount: vestingAccountKey,
+      })
+      .rpc({ commitment: 'confirmed', skipPreflight: true })
+
+    console.log('Transaction signature for create employee vesting account', tx2)
+    console.log('Employee account:', employeeAccount.toBase58())
   })
 })
