@@ -9,6 +9,7 @@ import { SYSTEM_PROGRAM_ID } from '@coral-xyz/anchor/dist/cjs/native/system'
 import { Program } from '@coral-xyz/anchor'
 import { createMint } from 'spl-token-bankrun'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 
 describe('vesting smart contract tests', () => {
   let beneficiary: Keypair
@@ -74,9 +75,19 @@ describe('vesting smart contract tests', () => {
     )
   })
 
-  it('should run the bankrun test', async () => {
-    // This is a placeholder for the actual test logic.
-    // You can replace this with your actual test code.
-    console.log('Running bankrun test...')
+  it('should create a vesting account', async () => {
+    const tx = await program.methods
+      .createVestingAccount(companyName)
+      .accounts({
+        signer: employer.publicKey,
+        mint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc({ commitment: 'confirmed' })
+
+    const vestingAccountData = await program.account.vestingAccount.fetch(vestingAccountKey, 'confirmed')
+
+    console.log('Transaction signature for create vesting account', tx)
+    console.log('Vesting account data:', vestingAccountData)
   })
 })
