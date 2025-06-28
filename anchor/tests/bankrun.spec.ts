@@ -2,7 +2,7 @@ import { PublicKey, Keypair } from '@solana/web3.js'
 import { describe } from 'node:test'
 import * as anchor from '@coral-xyz/anchor'
 import { createMint } from 'spl-token-bankrun'
-import { BanksClient, ProgramTestContext, startAnchor } from 'solana-bankrun'
+import { BanksClient, Clock, ProgramTestContext, startAnchor } from 'solana-bankrun'
 import { BankrunProvider } from 'anchor-bankrun'
 import IDL from '../target/idl/vesting.json'
 import { Vesting } from '../target/types/vesting'
@@ -71,7 +71,7 @@ describe('vesting smart contract tests', () => {
       program.programId,
     )
     ;[employeeAccount] = PublicKey.findProgramAddressSync(
-      [Buffer.from('employee_vesting'), beneficiary.publicKey.toBuffer(), vestingAccountKey.toBuffer()],
+      [Buffer.from('employee_vesting'), vestingAccountKey.toBuffer(), beneficiary.publicKey.toBuffer()],
       program.programId,
     )
   })
@@ -118,5 +118,28 @@ describe('vesting smart contract tests', () => {
 
     console.log('Transaction signature for create employee vesting account', tx2)
     console.log('Employee account:', employeeAccount.toBase58())
+  })
+
+  it('should claim the employee vested tokens', async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const currentClock = await banksClient.getClock()
+    context.setClock(
+      new Clock(
+        currentClock.slot,
+        currentClock.epochStartTimestamp,
+        currentClock.epoch,
+        currentClock.leaderScheduleEpoch,
+        1000n,
+      ),
+    )
+
+    const tx3 = await program2.methods
+      .claimTokens(companyName)
+      .accounts({
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc({ commitment: 'confirmed' })
+
+    console.log('Transaction signature for claim tokens', tx3)
   })
 })
