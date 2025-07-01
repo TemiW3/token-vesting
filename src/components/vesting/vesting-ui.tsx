@@ -1,25 +1,38 @@
 'use client'
 
 import { Keypair, PublicKey } from '@solana/web3.js'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ExplorerLink } from '../cluster/cluster-ui'
-import { useCounterProgram, useCounterProgramAccount } from './counter-data-access'
+import { useVestingProgram, useVestingProgramAccount } from './vesting-data-access'
 import { ellipsify } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export function CounterCreate() {
-  const { initialize } = useCounterProgram()
+  const { createVestingAccount } = useVestingProgram()
+  const [companyName, setCompanyName] = useState('')
+  const [mint, setMint] = useState('')
+  const { publicKey } = useWallet()
 
   return (
-    <Button onClick={() => initialize.mutateAsync(Keypair.generate())} disabled={initialize.isPending}>
-      Create {initialize.isPending && '...'}
-    </Button>
+    <div>
+      <input
+        type="text"
+        placeholder="Company Name"
+        className="input input-bordered w-full mb-2"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+      />
+      <Button onClick={() => initialize.mutateAsync(Keypair.generate())} disabled={initialize.isPending}>
+        Create {initialize.isPending && '...'}
+      </Button>
+    </div>
   )
 }
 
 export function CounterList() {
-  const { accounts, getProgramAccount } = useCounterProgram()
+  const { accounts, getProgramAccount } = useVestingProgram()
 
   if (getProgramAccount.isLoading) {
     return <span className="loading loading-spinner loading-lg"></span>
@@ -52,7 +65,7 @@ export function CounterList() {
 }
 
 function CounterCard({ account }: { account: PublicKey }) {
-  const { accountQuery, incrementMutation, setMutation, decrementMutation, closeMutation } = useCounterProgramAccount({
+  const { accountQuery, incrementMutation, setMutation, decrementMutation, closeMutation } = useVestingProgramAccount({
     account,
   })
 
