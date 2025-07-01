@@ -1,1 +1,1 @@
-/Users/temiloluwawilliams/Documents/token-vesting/anchor/target/sbpf-solana-solana/release/libvesting.rlib: /Users/temiloluwawilliams/Documents/token-vesting/anchor/programs/vesting/src/lib.rs
+/Users/temiloluwawilliams/token-vesting/token-vesting/anchor/target/sbpf-solana-solana/release/libvesting.rlib: /Users/temiloluwawilliams/token-vesting/token-vesting/anchor/programs/vesting/src/lib.rs
