@@ -4,7 +4,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::{transfer_checked, Mint, TransferChecked, TokenAccount, TokenInterface}};
 
-declare_id!("FqzkXZdwYjurnUKetJCAvaUw5WAqbwzU6gZEwydeEfqS");
+declare_id!("6chuXrBavAhcUGsgKF9XRSuzYwfrVNLRGjbYbD1HKwES");
 
 #[program]
 pub mod vesting {
