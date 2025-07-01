@@ -115,7 +115,7 @@ function VestingCard({ account }: { account: PublicKey }) {
   ) : (
     <Card>
       <CardHeader>
-        <CardTitle>Counter: {companyName}</CardTitle>
+        <CardTitle>Vesting Account: {companyName}</CardTitle>
         <CardDescription>
           Account: <ExplorerLink path={`account/${account}`} label={ellipsify(account.toString())} />
         </CardDescription>
