@@ -1,4 +1,4 @@
-import { PublicKey, Keypair } from '@solana/web3.js'
+import { PublicKey, Keypair, Transaction } from '@solana/web3.js'
 import { describe } from 'node:test'
 import * as anchor from '@coral-xyz/anchor'
 import { createMint } from 'spl-token-bankrun'
@@ -9,7 +9,7 @@ import { Vesting } from '../target/types/vesting'
 import { SYSTEM_PROGRAM_ID } from '@coral-xyz/anchor/dist/cjs/native/system'
 import { BN, Program } from '@coral-xyz/anchor'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
-import { mintTo, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { createAssociatedTokenAccount, createMintToInstruction, mintTo, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 
 describe('vesting smart contract tests', () => {
   let beneficiary: Keypair
@@ -95,16 +95,30 @@ describe('vesting smart contract tests', () => {
   it('should fund treasury token account', async () => {
     const amount = 10_000 * 10 ** 9
 
-    const mintTx = await mintTo(
-      // @ts-expect-error - Type error in spl-token-bankrun dependency
-      banksClient,
-      employer,
-      mint,
-      treasuryTokenAccount,
-      employer,
+    // 👇 Manually get a recent blockhash from Bankrun
+    const blockhash = await context.lastBlockhash
+
+    // 👇 Create the instruction
+    const mintIx = createMintToInstruction(
+      mint, // mint address
+      treasuryTokenAccount, // destination
+      employer.publicKey, // authority
       amount,
     )
-    console.log('Mint transaction signature:', mintTx)
+
+    // 👇 Build the transaction manually
+    const tx = new Transaction({
+      feePayer: employer.publicKey,
+      recentBlockhash: blockhash,
+    }).add(mintIx)
+
+    // 👇 Sign and send
+    if (!provider.sendAndConfirm) {
+      throw new Error('provider.sendAndConfirm is undefined')
+    }
+    const sig = await provider.sendAndConfirm(tx, [employer])
+
+    console.log('Mint transaction signature:', sig)
   })
 
   it('should create employee vesting account', async () => {
